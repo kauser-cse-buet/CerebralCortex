@@ -57,6 +57,7 @@ def compute_peak_valley(rip: DataStream,
     :param min_neg_slope_count_peak_correction:
     """
 
+
     data_smooth = smooth(data=rip.datapoints, span=smoothing_factor)
     window_length = int(round(time_window * fs))
     data_mac = moving_average_curve(data_smooth, window_length=window_length)
