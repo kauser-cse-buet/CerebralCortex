@@ -65,7 +65,7 @@ class TestPeakValleyComputation(unittest.TestCase):
         ds.datapoints = self.rip
 
         result_smooth = smooth(ds.datapoints, self._smoothing_factor)
-        sample_smooth_python = [i.sample for i in result_smooth]
+        sample_smooth_python = [i.sample for i in result_smooth[:5000]]
 
         sample_smooth_matlab = np.genfromtxt(os.path.join(os.path.dirname(__file__), 'res/testmatlab_rip_smooth.csv'),delimiter=',', )
         self.assertTrue(np.alltrue(np.round(sample_smooth_matlab) == np.round(sample_smooth_python)))
@@ -78,9 +78,11 @@ class TestPeakValleyComputation(unittest.TestCase):
         data_smooth = smooth(ds.datapoints, self._smoothing_factor)
         result = moving_average_curve(data_smooth, self._window_length)
 
-        sample_mac_python = [i.sample for i in result]
+        sample_mac_python = [i.sample for i in result[:5000]]
         sample_mac_matlab = np.genfromtxt(os.path.join(os.path.dirname(__file__), 'res/testmatlab_mac_sample.csv'),delimiter=',', )
-        self.assertTrue(np.alltrue(np.round(sample_mac_matlab) == np.round(sample_mac_python)))
+        for i in range(0,len(sample_mac_matlab)):
+            self.assertAlmostEqual(sample_mac_matlab[i],sample_mac_python[i],delta=0.1)
+
 
     def test_up_down_intercepts(self):
         ds = DataStream(None, None)
