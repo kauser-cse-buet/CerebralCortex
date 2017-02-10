@@ -91,12 +91,12 @@ def compute_peak_valley(rip: DataStream,
     # filter out peak valley pair of inspiration of small amplitude.
     peaks, valleys = filter_small_amp_inspiration_peak_valley(peaks=peaks,
                                                               valleys=valleys,
-                                                              inspiration_amplitude_threshold=inspiration_amplitude_threshold_perc)
+                                                              inspiration_amplitude_threshold_perc=inspiration_amplitude_threshold_perc)
 
     # filter out peak valley pair of expiration of small amplitude.
     peaks, valleys = filter_small_amp_expiration_peak_valley(peaks=peaks,
                                                              valleys=valleys,
-                                                             expiration_amplitude_threshold=expiration_amplitude_threshold_perc)
+                                                             expiration_amplitude_threshold_perc=expiration_amplitude_threshold_perc)
 
     peak_datastream = DataStream.from_datastream([rip])
     peak_datastream.datapoints = peaks
@@ -108,8 +108,8 @@ def compute_peak_valley(rip: DataStream,
 
 def filter_small_amp_expiration_peak_valley(peaks: List[DataPoint],
                                             valleys: List[DataPoint],
-                                            expiration_amplitude_threshold: float) -> [List[DataPoint],
-                                                                                       List[DataPoint]]:
+                                            expiration_amplitude_threshold_perc: float) -> [List[DataPoint],
+                                                                                            List[DataPoint]]:
     """
     Filter out peak valley pair if their expiration amplitude is less than or equal to 10% of
     average expiration amplitude.
@@ -131,7 +131,7 @@ def filter_small_amp_expiration_peak_valley(peaks: List[DataPoint],
     mean_expiration_amplitude = np.mean(expiration_amplitudes)
 
     for i, expiration_amplitude in enumerate(expiration_amplitudes):
-        if expiration_amplitude > expiration_amplitude_threshold * mean_expiration_amplitude:
+        if expiration_amplitude > expiration_amplitude_threshold_perc * mean_expiration_amplitude:
             peaks_updated.append(peaks[i])
             valleys_updated.append(valleys[i + 1])
 
@@ -142,8 +142,8 @@ def filter_small_amp_expiration_peak_valley(peaks: List[DataPoint],
 
 def filter_small_amp_inspiration_peak_valley(peaks: List[DataPoint],
                                              valleys: List[DataPoint],
-                                             inspiration_amplitude_threshold: float) -> [List[DataPoint],
-                                                                                         List[DataPoint]]:
+                                             inspiration_amplitude_threshold_perc: float) -> [List[DataPoint],
+                                                                                              List[DataPoint]]:
     """
     Filter out peak valley pair if their inspiration amplitude is less than or to equal 10% of
     average inspiration amplitude.
@@ -151,7 +151,7 @@ def filter_small_amp_inspiration_peak_valley(peaks: List[DataPoint],
     :return peaks_updated, valleys_updated:
     :param peaks:
     :param valleys:
-    :param inspiration_amplitude_threshold:
+    :param inspiration_amplitude_threshold_perc:
     """
 
     peaks_updated = []
@@ -161,7 +161,7 @@ def filter_small_amp_inspiration_peak_valley(peaks: List[DataPoint],
     mean_inspiration_amplitude = np.mean(inspiration_amplitudes)
 
     for i, inspiration_amplitude in enumerate(inspiration_amplitudes):
-        if inspiration_amplitude > inspiration_amplitude_threshold * mean_inspiration_amplitude:
+        if inspiration_amplitude > inspiration_amplitude_threshold_perc * mean_inspiration_amplitude:
             valleys_updated.append(valleys[i])
             peaks_updated.append(peaks[i])
 
@@ -441,9 +441,9 @@ def up_down_intercepts(data: List[DataPoint],
     down_intercepts = []
 
 
-    mac_start_time_set = set([i.start_time for i in mac])
+    mac_start_time_list = [i.start_time for i in mac]
 
-    subsets = [i for i in data if i.start_time in mac_start_time_set]
+    subsets = [i for i in data if i.start_time in mac_start_time_list]
 
     if len(subsets) == len(mac):
         for i in range(len(mac) - 1):
