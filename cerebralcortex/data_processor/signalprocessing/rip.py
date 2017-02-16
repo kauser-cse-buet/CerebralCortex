@@ -69,51 +69,51 @@ def compute_peak_valley(rip: DataStream,
                                                         mac=data_mac,
                                                         data_start_time_to_index=data_smooth_start_time_to_index)
 
-    up_intercepts, down_intercepts = filter_intercept_outlier(up_intercepts=up_intercepts,
+    up_intercepts_filtered, down_intercepts_filtered = filter_intercept_outlier(up_intercepts=up_intercepts,
                                                               down_intercepts=down_intercepts)
 
-    peaks, valleys = generate_peak_valley(up_intercepts=up_intercepts,
-                                          down_intercepts=down_intercepts,
+    peaks, valleys = generate_peak_valley(up_intercepts=up_intercepts_filtered,
+                                          down_intercepts=down_intercepts_filtered,
                                           data=data_smooth)
 
-    valleys = correct_valley_position(peaks=peaks,
+    valleys_corrected = correct_valley_position(peaks=peaks,
                                       valleys=valleys,
-                                      up_intercepts=up_intercepts,
+                                      up_intercepts=up_intercepts_filtered,
                                       data=data_smooth,
                                       data_start_time_to_index=data_smooth_start_time_to_index)
 
-    peaks = correct_peak_position(peaks=peaks,
-                                  valleys=valleys,
-                                  up_intercepts=up_intercepts,
+    peaks_corrected = correct_peak_position(peaks=peaks,
+                                  valleys=valleys_corrected,
+                                  up_intercepts=up_intercepts_filtered,
                                   data=data_smooth,
                                   max_amplitude_change_peak_correction=max_amplitude_change_peak_correction,
                                   min_neg_slope_count_peak_correction=min_neg_slope_count_peak_correction,
                                   data_start_time_to_index=data_smooth_start_time_to_index)
 
     # remove too close valley peak pair.
-    peaks, valleys = remove_close_valley_peak_pair(peaks=peaks,
-                                                   valleys=valleys,
+    peaks_filtered_close, valleys_filtered_close = remove_close_valley_peak_pair(peaks=peaks_corrected,
+                                                   valleys=valleys_corrected,
                                                    minimum_peak_to_valley_time_diff=minimum_peak_to_valley_time_diff)
 
     # Remove small  Expiration duration < 0.31
-    peaks, valleys = filter_expiration_duration_outlier(peaks=peaks,
-                                                        valleys=valleys,
+    peaks_filtered_exp_dur, valleys_filtered_exp_dur = filter_expiration_duration_outlier(peaks=peaks_filtered_close,
+                                                        valleys=valleys_filtered_close,
                                                         threshold_expiration_duration=threshold_expiration_duration)
 
     # filter out peak valley pair of inspiration of small amplitude.
-    peaks, valleys = filter_small_amp_inspiration_peak_valley(peaks=peaks,
-                                                              valleys=valleys,
+    peaks_filtered_insp_amp, valleys_filtered_insp_amp = filter_small_amp_inspiration_peak_valley(peaks=peaks_filtered_exp_dur,
+                                                              valleys=valleys_filtered_exp_dur,
                                                               inspiration_amplitude_threshold_perc=inspiration_amplitude_threshold_perc)
 
     # filter out peak valley pair of expiration of small amplitude.
-    peaks, valleys = filter_small_amp_expiration_peak_valley(peaks=peaks,
-                                                             valleys=valleys,
+    peaks_filtered_exp_amp, valleys_filtered_exp_amp = filter_small_amp_expiration_peak_valley(peaks=peaks_filtered_insp_amp,
+                                                             valleys=valleys_filtered_insp_amp,
                                                              expiration_amplitude_threshold_perc=expiration_amplitude_threshold_perc)
 
     peak_datastream = DataStream.from_datastream([rip])
-    peak_datastream.data = peaks
+    peak_datastream.data = peaks_filtered_exp_amp
     valley_datastream = DataStream.from_datastream([rip])
-    valley_datastream.data = valleys
+    valley_datastream.data = valleys_filtered_exp_amp
 
     return peak_datastream, valley_datastream
 
@@ -254,7 +254,6 @@ def correct_peak_position(peaks: List[DataPoint],
     :param data_start_time_to_index: hash table for data where start_time is key, index is value
 
     """
-    # TODO: This logic block is too computationally inefficient (list comprehensions and accessing start_time)
     for i, item in enumerate(peaks):
         if valleys[i].start_time < up_intercepts[i].start_time < peaks[i].start_time:
             up_intercept = up_intercepts[i]
